@@ -12,3 +12,7 @@ design/
 .env.production.local
 .env.production
 .env.*%  
+
+
+# installs
+node_modules/
