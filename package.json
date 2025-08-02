@@ -1,7 +1,7 @@
 {
   "name": "signalbot-js",
-  "version": "0.1.0",
-  "description": "A minimal Signal bot framework for JavaScript/TypeScript",
+  "version": "1.0.0",
+  "description": "A minimal JavaScript/TypeScript Signal bot framework",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,6 +11,7 @@
       "types": "./dist/index.d.ts"
     }
   },
+  
   "files": [
     "dist"
   ],
@@ -29,14 +30,10 @@
     "signal",
     "bot",
     "messaging",
-    "automation"
+    "automation",
+    "signal-cli"
   ],
-  "author": "Prrada",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/PaulAndreRada"
-  },
   "devDependencies": {
     "@types/node": "^24.0.11",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
