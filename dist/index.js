@@ -78,6 +78,7 @@ var Context = class {
 };
 
 // src/SignalBot.ts
+import fetch2 from "node-fetch";
 var SignalBot = class {
   commands = [];
   isRunning = false;
@@ -96,7 +97,13 @@ var SignalBot = class {
    */
   register(command) {
     this.commands.push(command);
-    this.log(`Registerd command: ${command.name}`);
+    this.log(`Registered command: ${command.name}`);
+  }
+  /**
+   *  Get all registered commands (read-only) for the help command 
+  */
+  get registeredCommands() {
+    return [...this.commands];
   }
   /**
    * Start the bot
@@ -138,7 +145,67 @@ var SignalBot = class {
     }
   }
   async poll() {
+    if (!this.isRunning) {
+      return;
+    }
+    try {
+      const messages = await this.fetchMessages();
+      for (const message of messages) {
+        await this.processMessage(message);
+      }
+    } catch (error) {
+      this.handleError(error);
+    }
+    if (this.isRunning) {
+      this.pollTimeout = setTimeout(() => this.poll(), this.config.poll_interval);
+    }
   }
+  // poll method
+  async fetchMessages() {
+    const url = `http://${this.config.signal_service}/v1/receive/${encodeURIComponent(this.config.phone_number)}`;
+    const response = await fetch2(url);
+    if (!response.ok) {
+      throw new SignalAPIError(
+        `Failed to fetch messages: ${response.statusText}`,
+        response.status
+      );
+    }
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      this.log("No messages or invalid response");
+      return [];
+    }
+    return data.filter(
+      (msg) => msg?.envelope?.dataMessage?.message && msg?.envelope?.source
+    );
+  }
+  // fetchMessages method
+  async processMessage(message) {
+    const context = new Context(this.config, message);
+    this.log(`Processing:"${context.text}" from ${context.sender}`);
+    this.log(`RAW: ${JSON.stringify(message, null, 2)}`);
+    for (const command of this.commands) {
+      try {
+        const handled = await command.handle(context);
+        if (handled) {
+          this.log(`handled by: ${command.name}`);
+          return;
+        }
+      } catch (error) {
+        this.log(`Error in ${command.name}: ${error}`);
+      }
+    }
+    this.log(`No command handled: "${context.text}"`);
+  }
+  // processMessage Method
+  handleError(error) {
+    if (error instanceof SignalAPIError) {
+      this.log(`Signal API error: ${error.message}`);
+    } else {
+      this.log(`Unexpected error: ${error}`);
+    }
+  }
+  // handleError
 };
 export {
   Command,

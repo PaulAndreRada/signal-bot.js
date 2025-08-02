@@ -1,4 +1,6 @@
 
+# bot env
+bot-config/
 
 # claude code
 CLAUDE.md
@@ -16,3 +18,4 @@ design/
 
 # installs
 node_modules/
+

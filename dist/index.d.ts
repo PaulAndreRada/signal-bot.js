@@ -19,6 +19,10 @@ declare class SignalBot {
      */
     register(command: Command): void;
     /**
+     *  Get all registered commands (read-only) for the help command
+    */
+    get registeredCommands(): ReadonlyArray<Command>;
+    /**
      * Start the bot
      */
     start(): Promise<void>;
@@ -29,6 +33,9 @@ declare class SignalBot {
     private validateConfig;
     private log;
     private poll;
+    private fetchMessages;
+    private processMessage;
+    private handleError;
 }
 
 interface SignalMessage {
