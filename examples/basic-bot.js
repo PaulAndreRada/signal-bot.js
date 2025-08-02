@@ -1,5 +1,13 @@
-// test-real-bot.js - Signal bot with .env configuration
-import { SignalBot, Command } from './dist/index.js';
+// examples/basic-bot.js
+// Basic SignalBot example with ping, test, and echo commands
+//
+// Setup:
+// 1. Copy .env.example to .env and add your phone number
+// 2. Start Docker: docker run -d --name signal-api -p 8080:8080 -v $(pwd)/bot-config:/home/.local/share/signal-cli -e 'MODE=native' bbernhard/signal-cli-rest-api:latest
+// 3. Link Signal: curl -X GET 'http://localhost:8080/v1/qrcodelink?device_name=SignalBot' --output qr.png && open qr.png
+// 4. Run bot: node examples/basic-bot.js
+
+import { SignalBot, Command } from '../dist/index.js';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -7,7 +15,7 @@ import { dirname, join } from 'path';
 // Load environment variables from .env file
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-config({ path: join(__dirname, '.env') });
+config({ path: join(__dirname, '..', '.env') });
 
 class PingCommand extends Command {
     get name() { return 'ping'; }
@@ -53,6 +61,27 @@ class EchoCommand extends Command {
     }
 }
 
+class HelpCommand extends Command {
+    get name() { return 'help'; }
+    get description() { return 'Show available commands'; }
+    
+    async handle(ctx) {
+        if (ctx.startsWith('help')) {
+            const helpText = [
+                '🤖 Available Commands:',
+                '• ping - Test connectivity',
+                '• test - Verify bot is working', 
+                '• echo [message] - Repeat your message',
+                '• help - Show this message'
+            ].join('\n');
+            
+            await ctx.send(helpText);
+            return true;
+        }
+        return false;
+    }
+}
+
 // Read configuration from .env file
 const phoneNumber = process.env.SIGNAL_PHONE;
 const signalService = process.env.SIGNAL_SERVICE || 'localhost:8080';
@@ -62,29 +91,14 @@ const debug = process.env.DEBUG === 'true';
 // Validate configuration
 if (!phoneNumber) {
     console.log('❌ Configuration Error!');
-    console.log('');
-    console.log('Please create a .env file with your phone number:');
-    console.log('1. Copy .env.example to .env');
-    console.log('2. Edit .env and add your Signal phone number');
-    console.log('3. Run the bot again');
-    console.log('');
-    console.log('Example .env file:');
-    console.log('SIGNAL_PHONE="+16464394850"');
+    console.log('Please create a .env file with your phone number.');
+    console.log('See .env.example for template.');
     process.exit(1);
 }
 
-if (!phoneNumber.startsWith('+')) {
-    console.log('❌ Phone number must include country code (e.g., +1 for US)');
-    console.log(`Current: ${phoneNumber}`);
-    console.log('Correct: +16464394850');
-    process.exit(1);
-}
+console.log(`🤖 Starting Basic SignalBot for ${phoneNumber}...`);
 
-console.log(`🤖 Starting SignalBot for ${phoneNumber}...`);
-console.log(`📡 Signal API: ${signalService}`);
-console.log(`⏱️  Poll interval: ${pollInterval}ms`);
-
-// Create bot with .env configuration
+// Create and configure bot
 const bot = new SignalBot({
     signal_service: signalService,
     phone_number: phoneNumber,
@@ -96,29 +110,18 @@ const bot = new SignalBot({
 bot.register(new PingCommand());
 bot.register(new TestCommand());
 bot.register(new EchoCommand());
+bot.register(new HelpCommand());
 
-console.log('📋 Commands registered:');
-console.log('   • ping - responds with pong');
-console.log('   • test - confirms bot is working');
-console.log('   • echo [message] - echoes back your message');
-
-console.log('\n🎯 Bot ready! Send these messages to test:');
-console.log('   • "ping"');
-console.log('   • "test"');
-console.log('   • "echo hello world"');
-
-console.log('\n🚀 Starting message polling...');
+console.log('📋 Bot ready! Send these test messages:');
+console.log('   • "ping" - Basic connectivity test');
+console.log('   • "test" - Verify bot functionality');
+console.log('   • "echo hello world" - Echo test');
+console.log('   • "help" - Show available commands');
 
 // Start the bot
 try {
     await bot.start();
 } catch (error) {
     console.log('❌ Bot failed to start:', error.message);
-    
-    if (error.message.includes('Failed to fetch messages')) {
-        console.log('\n💡 This usually means:');
-        console.log('   1. Signal API not running: docker ps | grep signal-api');
-        console.log('   2. Number not linked: try QR code linking again');
-        console.log('   3. Wrong phone number in .env file');
-    }
+    console.log('Check that Docker is running and Signal is linked.');
 }

@@ -13,9 +13,21 @@ design/
 .env.test.local
 .env.production.local
 .env.production
-.env.*%  
-
+.env.*%
 
 # installs
 node_modules/
 
+# Build output
+dist/
+
+# Signal data (contains private keys)
+bot-config/
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

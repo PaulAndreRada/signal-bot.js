@@ -50,6 +50,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "dotenv": "^17.2.1",
     "node-fetch": "3"
   }
 }
